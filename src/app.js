@@ -74,3 +74,21 @@ app.get('/locations/:location/history/:id', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
+// Location dashboard page
+app.get('/locations/:location', (req, res) => {
+  const location = req.params.location;
+  res.render('location', { location });
+});
+
+// Edit latest version route (form pre-filled — we'll implement next)
+app.get('/locations/:location/edit', (req, res) => {
+  const location = req.params.location;
+  const history = documents[location] || [];
+  const latest = history[history.length - 1];
+
+  if (!latest) return res.send('No documents found to edit.');
+  
+  res.render('edit', { location, document: latest });
+});
+
