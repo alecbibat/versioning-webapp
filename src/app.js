@@ -122,3 +122,5 @@ app.get('/locations/:location/edit', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
 });
+
+app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
