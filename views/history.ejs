@@ -1,0 +1,22 @@
+<link rel="stylesheet" href="/styles.css" />
+
+<h2>Version History — <%= location.replace(/\b\w/g, l => l.toUpperCase()) %></h2>
+
+<% if (versions.length === 0) { %>
+  <p>No documents found for this location.</p>
+<% } else { %>
+  <ul style="list-style-type: none; padding: 0;">
+    <% versions.slice().reverse().forEach((doc, i) => { %>
+      <li style="margin-bottom: 15px;">
+        <div style="padding: 10px; border: 1px solid #ccc; border-radius: 8px;">
+          <strong>Version <%= versions.length - i %></strong><br>
+          <strong>Title:</strong> <%= doc.documentTitle %><br>
+          <strong>Saved:</strong> <%= doc.timestamp %><br>
+          <a href="/locations/<%= location %>/history/<%= doc.id %>">🔍 View This Version</a>
+        </div>
+      </li>
+    <% }) %>
+  </ul>
+<% } %>
+
+<a href="/locations/<%= location %>">← Back to Dashboard</a>
