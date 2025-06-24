@@ -1,178 +1,99 @@
 const express = require('express');
-const path = require('path');
 const bodyParser = require('body-parser');
 const multer = require('multer');
-const moment = require('moment');
 const { v4: uuidv4 } = require('uuid');
+const moment = require('moment');
+const path = require('path');
+const ejs = require('ejs');
+const puppeteer = require('puppeteer');
+
+const db = require('../models/db');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const port = process.env.PORT || 3000;
 
-// In-memory document store
-const documents = {};
-
-// Multer setup (file uploads)
-const upload = multer({ dest: path.join(__dirname, '..', 'uploads') });
-
-app.use(bodyParser.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, '..', 'public')));
 app.set('view engine', 'ejs');
-app.set('views', path.join(__dirname, '..', 'views'));
+app.use(express.static(path.join(__dirname, '../public')));
+app.use(bodyParser.urlencoded({ extended: true }));
 
-// Home – list locations
-app.get('/', (req, res) => {
-  res.render('index');
+const upload = multer();
+
+// Home page showing latest version of the document
+app.get('/', async (req, res) => {
+  const latest = await db.getLatestVersion();
+  res.render('index', { document: latest });
 });
 
-// Location dashboard
-app.get('/locations/:location', (req, res) => {
-  const location = req.params.location;
-  res.render('location', { location });
+// Page to create new version
+app.get('/new', (req, res) => {
+  res.render('new');
 });
 
-// New document form
-app.get('/locations/:location/new', (req, res) => {
-  res.render('new', { location: req.params.location });
+app.post('/new', upload.none(), async (req, res) => {
+  const { location, content } = req.body;
+  await db.saveNewVersion(location, content);
+  res.redirect('/');
 });
 
-// Save new document version
-app.post('/locations/:location/new', upload.single('attachment'), (req, res) => {
-  const location = req.params.location;
-  const id = uuidv4();
-
-  const {
-    documentTitle,
-    preparedBy,
-    locationName,
-    date,
-    incidentName202,
-    incidentObjective202,
-    incidentBriefing201,
-    situationSummary201,
-    objectives = [],
-    strategies = [],
-    resources = [],
-    assigned = [],
-  } = req.body;
-
-  const attachment = req.file ? {
-    originalname: req.file.originalname,
-    filename: req.file.filename,
-    path: req.file.path
-  } : null;
-
-  if (!documents[location]) documents[location] = [];
-
-  documents[location].push({
-    id,
-    documentTitle,
-    preparedBy,
-    locationName,
-    date,
-    incidentName202,
-    incidentObjective202,
-    incidentBriefing201,
-    situationSummary201,
-    actionPlan: objectives.map((_, i) => ({
-      objective: objectives[i],
-      strategy: strategies[i],
-      resource: resources[i],
-      assigned: assigned[i]
-    })),
-    attachment,
-    timestamp: moment().format('YYYY-MM-DD HH:mm:ss'),
-  });
-
-  res.redirect(`/locations/${location}/view`);
-});
-
-// View latest document
-app.get('/locations/:location/view', (req, res) => {
-  const location = req.params.location;
-  const history = documents[location] || [];
-  const latest = history[history.length - 1];
-  if (!latest) return res.send('No documents found for this location.');
-  res.render('view', { location, document: latest });
-});
-
-// View history list
-app.get('/locations/:location/history', (req, res) => {
-  const location = req.params.location;
-  const history = documents[location] || [];
-  res.render('history', { location, versions: history });
+// View history
+app.get('/history', async (req, res) => {
+  const history = await db.getAllVersions();
+  res.render('history', { versions: history });
 });
 
 // View specific version
-app.get('/locations/:location/history/:id', (req, res) => {
-  const location = req.params.location;
-  const version = (documents[location] || []).find(doc => doc.id === req.params.id);
-  if (!version) return res.send('Version not found.');
-  res.render('view', { location, document: version });
+app.get('/view/:id', async (req, res) => {
+  const version = await db.getVersionById(req.params.id);
+  res.render('view', { document: version });
 });
 
-// Edit latest version (pre-fill form)
-app.get('/locations/:location/edit', (req, res) => {
-  const location = req.params.location;
-  const history = documents[location] || [];
-  const latest = history[history.length - 1];
-  if (!latest) return res.send('No documents found to edit.');
-  res.render('edit', { location, document: latest });
+// Edit version
+app.get('/edit/:id', async (req, res) => {
+  const version = await db.getVersionById(req.params.id);
+  res.render('edit', { document: version });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+app.post('/edit/:id', upload.none(), async (req, res) => {
+  const { location, content } = req.body;
+  await db.updateVersion(req.params.id, location, content);
+  res.redirect('/');
 });
 
-app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+// Location-specific view
+app.get('/location/:location', async (req, res) => {
+  const docs = await db.getVersionsByLocation(req.params.location);
+  res.render('location', { documents: docs, location: req.params.location });
+});
 
-const pdf = require('html-pdf');
+// PDF download route
+app.get('/download/:id', async (req, res) => {
+  const version = await db.getVersionById(req.params.id);
+  const templatePath = path.join(__dirname, '../views/view.ejs');
 
-app.get('/locations/:location/pdf', (req, res) => {
-  const location = req.params.location;
-  const history = documents[location] || [];
-  const latest = history[history.length - 1];
+  ejs.renderFile(templatePath, { document: version }, async (err, html) => {
+    if (err) return res.status(500).send('Template render error');
 
-  if (!latest) return res.send('No document to generate.');
+    try {
+      const browser = await puppeteer.launch({
+        headless: 'new',
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+      });
 
-  const html = `
-    <h1>${latest.documentTitle}</h1>
-    <p><strong>Prepared By:</strong> ${latest.preparedBy}</p>
-    <p><strong>Location:</strong> ${latest.locationName}</p>
-    <p><strong>Date:</strong> ${latest.date}</p>
-    <hr>
-    <h2>Goals</h2>
-    <p><strong>Incident Name (202):</strong> ${latest.incidentName202}</p>
-    <p><strong>Incident Objective (202):</strong> ${latest.incidentObjective202}</p>
-    <p><strong>Incident Briefing (201):</strong> ${latest.incidentBriefing201}</p>
-    <p><strong>Situation Summary (201):</strong> ${latest.situationSummary201}</p>
-    <hr>
-    <h2>Action Plan Objectives</h2>
-    <table border="1" cellspacing="0" cellpadding="5">
-      <thead>
-        <tr>
-          <th>Objective (6A)</th>
-          <th>Strategy (6B)</th>
-          <th>Resources (6C)</th>
-          <th>Assigned To (6D)</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${latest.actionPlan.map(row => `
-          <tr>
-            <td>${row.objective}</td>
-            <td>${row.strategy}</td>
-            <td>${row.resource}</td>
-            <td>${row.assigned}</td>
-          </tr>`).join('')}
-      </tbody>
-    </table>
-  `;
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: 'networkidle0' });
 
-  pdf.create(html).toStream((err, stream) => {
-    if (err) return res.status(500).send('Error creating PDF.');
-    res.setHeader('Content-type', 'application/pdf');
-    res.setHeader('Content-disposition', `attachment; filename="${latest.documentTitle || 'document'}.pdf"`);
-    stream.pipe(res);
+      const pdfBuffer = await page.pdf({ format: 'A4' });
+      await browser.close();
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="document-${req.params.id}.pdf"`);
+      res.send(pdfBuffer);
+    } catch (e) {
+      res.status(500).send('PDF generation failed');
+    }
   });
 });
 
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});
