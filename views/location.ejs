@@ -16,6 +16,11 @@
       <button type="submit">✏️ Edit Latest Version</button>
     </form>
   </li>
+  <li style="margin: 10px 0;">
+    <form method="GET" action="/locations/<%= encodeURIComponent(location) %>/history">
+      <button type="submit">📜 View History</button>
+    </form>
+  </li>
 </ul>
 
 <a href="/">← Back to Locations</a>
