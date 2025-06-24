@@ -137,3 +137,15 @@ app.get('/download/:id', async (req, res) => {
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
+
+// In app.js:
+app.get('/init-db', async (req, res) => {
+  try {
+    await db.initTable();
+    res.send('✅ Table created');
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('❌ Failed');
+  }
+});
+
