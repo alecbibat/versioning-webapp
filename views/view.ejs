@@ -1,0 +1,58 @@
+<link rel="stylesheet" href="/styles.css" />
+
+<h1><%= document.documentTitle %></h1>
+<p><strong>Prepared By:</strong> <%= document.preparedBy %></p>
+<p><strong>Location Name:</strong> <%= document.locationName %></p>
+<p><strong>Date:</strong> <%= document.date %></p>
+<p><strong>Saved At:</strong> <%= document.timestamp %></p>
+<hr>
+
+<h2>📌 Goals</h2>
+<p><strong>Incident Name (202):</strong> <%= document.incidentName202 %></p>
+<p><strong>Incident Objective (202):</strong><br><%= document.incidentObjective202 %></p>
+<p><strong>Incident Briefing (201):</strong><br><%= document.incidentBriefing201 %></p>
+<p><strong>Situation Summary at Initial Start (201):</strong><br><%= document.situationSummary201 %></p>
+
+<hr>
+
+<h2>📋 Action Plan Objectives (202)</h2>
+<table border="1" cellpadding="5">
+  <thead>
+    <tr>
+      <th>Incident Objective (6A)</th>
+      <th>Strategies/Tactics (6B)</th>
+      <th>Resources Required (6C)</th>
+      <th>Assigned To (6D)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% document.actionPlan.forEach(row => { %>
+      <tr>
+        <td><%= row.objective %></td>
+        <td><%= row.strategy %></td>
+        <td><%= row.resource %></td>
+        <td><%= row.assigned %></td>
+      </tr>
+    <% }) %>
+  </tbody>
+</table>
+
+<hr>
+
+<h2>📎 Attachment</h2>
+<% if (document.attachment) { %>
+  <p><a href="/uploads/<%= document.attachment.filename %>" target="_blank">
+    Download: <%= document.attachment.originalname %>
+  </a></p>
+<% } else { %>
+  <p>No file uploaded.</p>
+<% } %>
+
+<hr>
+
+<form method="GET" action="/locations/<%= location %>/pdf">
+  <button type="submit" class="btn btn-outline-dark mt-3">⬇️ Download as PDF</button>
+</form>
+
+
+<a href="/locations/<%= location %>">← Back to Dashboard</a>
