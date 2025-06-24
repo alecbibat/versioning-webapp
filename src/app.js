@@ -124,3 +124,55 @@ app.listen(PORT, () => {
 });
 
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
+
+const pdf = require('html-pdf');
+
+app.get('/locations/:location/pdf', (req, res) => {
+  const location = req.params.location;
+  const history = documents[location] || [];
+  const latest = history[history.length - 1];
+
+  if (!latest) return res.send('No document to generate.');
+
+  const html = `
+    <h1>${latest.documentTitle}</h1>
+    <p><strong>Prepared By:</strong> ${latest.preparedBy}</p>
+    <p><strong>Location:</strong> ${latest.locationName}</p>
+    <p><strong>Date:</strong> ${latest.date}</p>
+    <hr>
+    <h2>Goals</h2>
+    <p><strong>Incident Name (202):</strong> ${latest.incidentName202}</p>
+    <p><strong>Incident Objective (202):</strong> ${latest.incidentObjective202}</p>
+    <p><strong>Incident Briefing (201):</strong> ${latest.incidentBriefing201}</p>
+    <p><strong>Situation Summary (201):</strong> ${latest.situationSummary201}</p>
+    <hr>
+    <h2>Action Plan Objectives</h2>
+    <table border="1" cellspacing="0" cellpadding="5">
+      <thead>
+        <tr>
+          <th>Objective (6A)</th>
+          <th>Strategy (6B)</th>
+          <th>Resources (6C)</th>
+          <th>Assigned To (6D)</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${latest.actionPlan.map(row => `
+          <tr>
+            <td>${row.objective}</td>
+            <td>${row.strategy}</td>
+            <td>${row.resource}</td>
+            <td>${row.assigned}</td>
+          </tr>`).join('')}
+      </tbody>
+    </table>
+  `;
+
+  pdf.create(html).toStream((err, stream) => {
+    if (err) return res.status(500).send('Error creating PDF.');
+    res.setHeader('Content-type', 'application/pdf');
+    res.setHeader('Content-disposition', `attachment; filename="${latest.documentTitle || 'document'}.pdf"`);
+    stream.pipe(res);
+  });
+});
+
