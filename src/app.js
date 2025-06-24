@@ -82,19 +82,14 @@ app.get('/locations/:id', async (req, res) => {
   const locationId = req.params.id;
 
   try {
-    const snapshot = await db.collection('documents')
-      .where('location', '==', locationId)
-      .orderBy('created_at', 'desc')
-      .get();
-
-    const versions = snapshot.docs.map(doc => doc.data());
-
+    const versions = await db.getVersionsByLocation(locationId);
     res.render('location', { location: locationId, versions });
   } catch (err) {
     console.error(err);
     res.status(500).send('Error fetching location versions');
   }
 });
+
 
 app.listen(port, () => {
   console.log(`App listening at http://localhost:${port}`);
