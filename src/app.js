@@ -136,54 +136,53 @@ app.get('/locations/:location/pdf', async (req, res) => {
 
   const html = `
     <html>
-    <head>
-      <style>
-        body { font-family: Arial; padding: 20px; }
-        h1, h2 { border-bottom: 1px solid #ccc; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #000; padding: 6px; }
-      </style>
-    </head>
-    <body>
-      <h1>${latest.documentTitle}</h1>
-      <p><strong>Prepared By:</strong> ${latest.preparedBy}</p>
-      <p><strong>Location:</strong> ${latest.locationName}</p>
-      <p><strong>Date:</strong> ${latest.date}</p>
-
-      <h2>Goals</h2>
-      <p><strong>Incident Name (202):</strong> ${latest.incidentName202}</p>
-      <p><strong>Incident Objective (202):</strong> ${latest.incidentObjective202}</p>
-      <p><strong>Incident Briefing (201):</strong> ${latest.incidentBriefing201}</p>
-      <p><strong>Situation Summary (201):</strong> ${latest.situationSummary201}</p>
-
-      <h2>Action Plan Objectives</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Objective (6A)</th>
-            <th>Strategy (6B)</th>
-            <th>Resources (6C)</th>
-            <th>Assigned To (6D)</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${latest.actionPlan.map(row => `
+      <head>
+        <style>
+          body { font-family: Arial; padding: 20px; }
+          h1, h2 { border-bottom: 1px solid #ccc; }
+          table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+          th, td { border: 1px solid #000; padding: 6px; }
+        </style>
+      </head>
+      <body>
+        <h1>${latest.documentTitle}</h1>
+        <p><strong>Prepared By:</strong> ${latest.preparedBy}</p>
+        <p><strong>Location:</strong> ${latest.locationName}</p>
+        <p><strong>Date:</strong> ${latest.date}</p>
+        <h2>Goals</h2>
+        <p><strong>Incident Name (202):</strong> ${latest.incidentName202}</p>
+        <p><strong>Incident Objective (202):</strong> ${latest.incidentObjective202}</p>
+        <p><strong>Incident Briefing (201):</strong> ${latest.incidentBriefing201}</p>
+        <p><strong>Situation Summary (201):</strong> ${latest.situationSummary201}</p>
+        <h2>Action Plan Objectives</h2>
+        <table>
+          <thead>
             <tr>
-              <td>${row.objective}</td>
-              <td>${row.strategy}</td>
-              <td>${row.resource}</td>
-              <td>${row.assigned}</td>
-            </tr>`).join('')}
-        </tbody>
-      </table>
-    </body>
+              <th>Objective (6A)</th>
+              <th>Strategy (6B)</th>
+              <th>Resources (6C)</th>
+              <th>Assigned To (6D)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${latest.actionPlan.map(row => `
+              <tr>
+                <td>${row.objective}</td>
+                <td>${row.strategy}</td>
+                <td>${row.resource}</td>
+                <td>${row.assigned}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </body>
     </html>
   `;
 
   try {
     const browser = await puppeteer.launch({
       headless: 'new',
-      args: ['--no-sandbox', '--disable-setuid-sandbox']
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      executablePath: process.env.GOOGLE_CHROME_BIN // 👈 necessary for Heroku
     });
 
     const page = await browser.newPage();
@@ -202,5 +201,6 @@ app.get('/locations/:location/pdf', async (req, res) => {
     res.status(500).send('Error creating PDF.');
   }
 });
+
 
 
