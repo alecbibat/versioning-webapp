@@ -74,13 +74,10 @@ app.get('/download/:id', async (req, res) => {
     if (err) return res.status(500).send('Template render error');
 
     try {
-     const browser = await puppeteer.launch({
-  headless: 'new',
-  executablePath: '/app/.apt/opt/chrome/chrome',
-  args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
-});
-
-
+      const browser = await puppeteer.launch({
+        headless: 'new',
+        executablePath: '/app/.apt/opt/chrome/chrome',
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
       });
 
       const page = await browser.newPage();
@@ -93,6 +90,7 @@ app.get('/download/:id', async (req, res) => {
       res.setHeader('Content-Disposition', `attachment; filename="document-${req.params.id}.pdf"`);
       res.send(pdfBuffer);
     } catch (e) {
+      console.error('PDF generation error:', e);
       res.status(500).send('PDF generation failed');
     }
   });
