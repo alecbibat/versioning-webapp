@@ -1,1 +1,7 @@
-<h1><%= document.title %></h1><p><%= document.body %></p>
+<h2><%= document.title %> — <%= location %></h2>
+<p><strong>Author:</strong> <%= document.author %></p>
+<p><strong>Tags:</strong> <%= document.tags %></p>
+<p><strong>Saved:</strong> <%= document.timestamp %></p>
+<hr>
+<pre><%= document.body %></pre>
+<a href="/locations/<%= location %>/history">View History</a>
