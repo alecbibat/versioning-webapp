@@ -1,7 +1,65 @@
-<h2><%= document.title %> — <%= location %></h2>
-<p><strong>Author:</strong> <%= document.author %></p>
-<p><strong>Tags:</strong> <%= document.tags %></p>
-<p><strong>Saved:</strong> <%= document.timestamp %></p>
-<hr>
-<pre><%= document.body %></pre>
-<a href="/locations/<%= location %>/history">View History</a>
+<h2>Create New Document — <%= location %></h2>
+<form method="POST" action="/locations/<%= location %>/new" enctype="multipart/form-data">
+  <h3>Basic Information</h3>
+  <label>Document Title:</label><br>
+  <input name="documentTitle" required /><br><br>
+
+  <label>Prepared By:</label><br>
+  <input name="preparedBy" required /><br><br>
+
+  <label>Location Name:</label><br>
+  <input name="locationName" value="<%= location %>" required /><br><br>
+
+  <label>Date:</label><br>
+  <input type="date" name="date" required /><br><br>
+
+  <h3>Goals</h3>
+  <label>Incident Name (202):</label><br>
+  <input name="incidentName202" required /><br><br>
+
+  <label>Incident Objective (202):</label><br>
+  <textarea name="incidentObjective202" rows="2" cols="50" required></textarea><br><br>
+
+  <label>Incident Briefing (201):</label><br>
+  <textarea name="incidentBriefing201" rows="3" cols="50" required></textarea><br><br>
+
+  <label>Situation Summary at Initial Start (201):</label><br>
+  <textarea name="situationSummary201" rows="3" cols="50" required></textarea><br><br>
+
+  <h3>Action Plan Objectives (202)</h3>
+  <table id="actionPlanTable" border="1" cellpadding="5">
+    <thead>
+      <tr>
+        <th>Incident Objective (6A)</th>
+        <th>Strategies/Tactics (6B)</th>
+        <th>Resources Required (6C)</th>
+        <th>Assigned To (6D)</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody">
+      <tr>
+        <td><input name="objectives[]" required></td>
+        <td><input name="strategies[]" required></td>
+        <td><input name="resources[]" required></td>
+        <td><input name="assigned[]" required></td>
+      </tr>
+    </tbody>
+  </table>
+  <button type="button" onclick="addRow()">+ Add Row</button><br><br>
+
+  <h3>Upload Attachments</h3>
+  <input type="file" name="attachment" /><br><br>
+
+  <button type="submit">Save Document</button>
+</form>
+
+<script>
+function addRow() {
+  const table = document.getElementById('tableBody');
+  const row = table.insertRow();
+  for (let i = 0; i < 4; i++) {
+    const cell = row.insertCell();
+    cell.innerHTML = '<input name="' + ['objectives[]', 'strategies[]', 'resources[]', 'assigned[]'][i] + '" required>';
+  }
+}
+</script>
