@@ -18,82 +18,120 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 const upload = multer();
 
-// Home page showing latest version of the document
 app.get('/', async (req, res) => {
-  const latest = await db.getLatestVersion();
-  res.render('index', { document: latest });
+  try {
+    const latest = await db.getLatestVersion();
+    res.render('index', { document: latest });
+  } catch (error) {
+    console.error('Error in GET /:', error);
+    res.status(500).send('Internal server error');
+  }
 });
 
-// Page to create new version
 app.get('/new', (req, res) => {
-  res.render('new');
+  try {
+    res.render('new');
+  } catch (error) {
+    console.error('Error in GET /new:', error);
+    res.status(500).send('Internal server error');
+  }
 });
 
 app.post('/new', upload.none(), async (req, res) => {
-  const { location, content } = req.body;
-  await db.saveNewVersion(location, content);
-  res.redirect('/');
+  try {
+    const { location, content } = req.body;
+    await db.saveNewVersion(location, content);
+    res.redirect('/');
+  } catch (error) {
+    console.error('Error in POST /new:', error);
+    res.status(500).send('Internal server error');
+  }
 });
 
-// View history
 app.get('/history', async (req, res) => {
-  const history = await db.getAllVersions();
-  res.render('history', { versions: history });
+  try {
+    const history = await db.getAllVersions();
+    res.render('history', { versions: history });
+  } catch (error) {
+    console.error('Error in GET /history:', error);
+    res.status(500).send('Internal server error');
+  }
 });
 
-// View specific version
 app.get('/view/:id', async (req, res) => {
-  const version = await db.getVersionById(req.params.id);
-  res.render('view', { document: version });
+  try {
+    const version = await db.getVersionById(req.params.id);
+    res.render('view', { document: version });
+  } catch (error) {
+    console.error('Error in GET /view/:id:', error);
+    res.status(500).send('Internal server error');
+  }
 });
 
-// Edit version
 app.get('/edit/:id', async (req, res) => {
-  const version = await db.getVersionById(req.params.id);
-  res.render('edit', { document: version });
+  try {
+    const version = await db.getVersionById(req.params.id);
+    res.render('edit', { document: version });
+  } catch (error) {
+    console.error('Error in GET /edit/:id:', error);
+    res.status(500).send('Internal server error');
+  }
 });
 
 app.post('/edit/:id', upload.none(), async (req, res) => {
-  const { location, content } = req.body;
-  await db.updateVersion(req.params.id, location, content);
-  res.redirect('/');
+  try {
+    const { location, content } = req.body;
+    await db.updateVersion(req.params.id, location, content);
+    res.redirect('/');
+  } catch (error) {
+    console.error('Error in POST /edit/:id:', error);
+    res.status(500).send('Internal server error');
+  }
 });
 
-// Location-specific view
 app.get('/location/:location', async (req, res) => {
-  const docs = await db.getVersionsByLocation(req.params.location);
-  res.render('location', { documents: docs, location: req.params.location });
+  try {
+    const docs = await db.getVersionsByLocation(req.params.location);
+    res.render('location', { documents: docs, location: req.params.location });
+  } catch (error) {
+    console.error('Error in GET /location/:location:', error);
+    res.status(500).send('Internal server error');
+  }
 });
 
-// PDF download route
 app.get('/download/:id', async (req, res) => {
-  const version = await db.getVersionById(req.params.id);
-  const templatePath = path.join(__dirname, '../views/view.ejs');
+  try {
+    const version = await db.getVersionById(req.params.id);
+    const templatePath = path.join(__dirname, '../views/view.ejs');
 
-  ejs.renderFile(templatePath, { document: version }, async (err, html) => {
-    if (err) return res.status(500).send('Template render error');
+    ejs.renderFile(templatePath, { document: version }, async (err, html) => {
+      if (err) return res.status(500).send('Template render error');
 
-    try {
-      const browser = await puppeteer.launch({
-        headless: 'new',
-        executablePath: '/app/.apt/opt/chrome/chrome',
-        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
-      });
+      try {
+        const browser = await puppeteer.launch({
+          headless: 'new',
+          executablePath: '/app/.apt/opt/chrome/chrome',
+          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+        });
 
-      const page = await browser.newPage();
-      await page.setContent(html, { waitUntil: 'networkidle0' });
+        const page = await browser.newPage();
+        await page.setContent(html, { waitUntil: 'networkidle0' });
 
-      const pdfBuffer = await page.pdf({ format: 'A4' });
-      await browser.close();
+        const pdfBuffer = await page.pdf({ format: 'A4' });
+        await browser.close();
 
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="document-${req.params.id}.pdf"`);
-      res.send(pdfBuffer);
-    } catch (e) {
-      console.error('PDF generation error:', e);
-      res.status(500).send('PDF generation failed');
-    }
-  });
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="document-${req.params.id}.pdf"`);
+        res.send(pdfBuffer);
+      } catch (e) {
+        console.error('PDF generation error:', e);
+        res.status(500).send('PDF generation failed');
+      }
+    });
+  } catch (error) {
+    console.error('Error in GET /download/:id:', error);
+    res.status(500).send('Internal server error');
+  }
 });
 
 app.listen(port, () => {
