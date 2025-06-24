@@ -1,65 +1,51 @@
-<h2>Create New Document — <%= location %></h2>
-<form method="POST" action="/locations/<%= location %>/new" enctype="multipart/form-data">
-  <h3>Basic Information</h3>
-  <label>Document Title:</label><br>
-  <input name="documentTitle" required /><br><br>
+<h1><%= document.documentTitle %></h1>
+<p><strong>Prepared By:</strong> <%= document.preparedBy %></p>
+<p><strong>Location Name:</strong> <%= document.locationName %></p>
+<p><strong>Date:</strong> <%= document.date %></p>
+<p><strong>Saved At:</strong> <%= document.timestamp %></p>
+<hr>
 
-  <label>Prepared By:</label><br>
-  <input name="preparedBy" required /><br><br>
+<h2>📌 Goals</h2>
+<p><strong>Incident Name (202):</strong> <%= document.incidentName202 %></p>
+<p><strong>Incident Objective (202):</strong><br><%= document.incidentObjective202 %></p>
+<p><strong>Incident Briefing (201):</strong><br><%= document.incidentBriefing201 %></p>
+<p><strong>Situation Summary at Initial Start (201):</strong><br><%= document.situationSummary201 %></p>
 
-  <label>Location Name:</label><br>
-  <input name="locationName" value="<%= location %>" required /><br><br>
+<hr>
 
-  <label>Date:</label><br>
-  <input type="date" name="date" required /><br><br>
-
-  <h3>Goals</h3>
-  <label>Incident Name (202):</label><br>
-  <input name="incidentName202" required /><br><br>
-
-  <label>Incident Objective (202):</label><br>
-  <textarea name="incidentObjective202" rows="2" cols="50" required></textarea><br><br>
-
-  <label>Incident Briefing (201):</label><br>
-  <textarea name="incidentBriefing201" rows="3" cols="50" required></textarea><br><br>
-
-  <label>Situation Summary at Initial Start (201):</label><br>
-  <textarea name="situationSummary201" rows="3" cols="50" required></textarea><br><br>
-
-  <h3>Action Plan Objectives (202)</h3>
-  <table id="actionPlanTable" border="1" cellpadding="5">
-    <thead>
+<h2>📋 Action Plan Objectives (202)</h2>
+<table border="1" cellpadding="5">
+  <thead>
+    <tr>
+      <th>Incident Objective (6A)</th>
+      <th>Strategies/Tactics (6B)</th>
+      <th>Resources Required (6C)</th>
+      <th>Assigned To (6D)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% document.actionPlan.forEach(row => { %>
       <tr>
-        <th>Incident Objective (6A)</th>
-        <th>Strategies/Tactics (6B)</th>
-        <th>Resources Required (6C)</th>
-        <th>Assigned To (6D)</th>
+        <td><%= row.objective %></td>
+        <td><%= row.strategy %></td>
+        <td><%= row.resource %></td>
+        <td><%= row.assigned %></td>
       </tr>
-    </thead>
-    <tbody id="tableBody">
-      <tr>
-        <td><input name="objectives[]" required></td>
-        <td><input name="strategies[]" required></td>
-        <td><input name="resources[]" required></td>
-        <td><input name="assigned[]" required></td>
-      </tr>
-    </tbody>
-  </table>
-  <button type="button" onclick="addRow()">+ Add Row</button><br><br>
+    <% }) %>
+  </tbody>
+</table>
 
-  <h3>Upload Attachments</h3>
-  <input type="file" name="attachment" /><br><br>
+<hr>
 
-  <button type="submit">Save Document</button>
-</form>
+<h2>📎 Attachment</h2>
+<% if (document.attachment) { %>
+  <p><a href="/uploads/<%= document.attachment.filename %>" target="_blank">
+    Download: <%= document.attachment.originalname %>
+  </a></p>
+<% } else { %>
+  <p>No file uploaded.</p>
+<% } %>
 
-<script>
-function addRow() {
-  const table = document.getElementById('tableBody');
-  const row = table.insertRow();
-  for (let i = 0; i < 4; i++) {
-    const cell = row.insertCell();
-    cell.innerHTML = '<input name="' + ['objectives[]', 'strategies[]', 'resources[]', 'assigned[]'][i] + '" required>';
-  }
-}
-</script>
+<hr>
+
+<a href="/locations/<%= location %>">← Back to Dashboard</a>
