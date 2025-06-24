@@ -17,13 +17,13 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 const upload = multer();
 
-// Homepage - list latest version
+// Homepage - latest version
 app.get('/', async (req, res) => {
   const latest = await db.getLatestVersion();
   res.render('index', { latest });
 });
 
-// View all versions
+// History of all versions
 app.get('/history', async (req, res) => {
   const versions = await db.getAllVersions();
   res.render('history', { versions });
@@ -34,50 +34,52 @@ app.get('/new', (req, res) => {
   res.render('new');
 });
 
-// Create new version
+// Create new document
 app.post('/new', upload.none(), async (req, res) => {
+  const { location, title, content } = req.body;
+
   const data = {
     id: uuidv4(),
-    location: req.body.location,
-    title: req.body.title,
-    content: req.body.content,
+    location,
+    title,
+    content,
     created_at: moment().toISOString()
   };
-  await db.saveVersion(data);
+
+  await db.saveVersion(data);  // This must exist in db.js
   res.redirect('/');
 });
 
-// Edit a version
+// View a specific version
+app.get('/view/:id', async (req, res) => {
+  const version = await db.getVersionById(req.params.id);
+  if (!version) return res.status(404).send('Version not found');
+  res.render('view', { version });
+});
+
+// Edit a specific version
 app.get('/edit/:id', async (req, res) => {
   const version = await db.getVersionById(req.params.id);
-  if (!version) {
-    return res.status(404).send('Version not found');
-  }
+  if (!version) return res.status(404).send('Version not found');
   res.render('edit', { version });
 });
 
 app.post('/edit/:id', upload.none(), async (req, res) => {
+  const { location, title, content } = req.body;
+
   const data = {
     id: uuidv4(),
-    location: req.body.location,
-    title: req.body.title,
-    content: req.body.content,
+    location,
+    title,
+    content,
     created_at: moment().toISOString()
   };
+
   await db.saveVersion(data);
   res.redirect('/');
 });
 
-// View a single version
-app.get('/view/:id', async (req, res) => {
-  const version = await db.getVersionById(req.params.id);
-  if (!version) {
-    return res.status(404).send('Version not found');
-  }
-  res.render('view', { version });
-});
-
-// View all versions for a location
+// Versions by location
 app.get('/locations/:id', async (req, res) => {
   const locationId = req.params.id;
 
@@ -90,7 +92,11 @@ app.get('/locations/:id', async (req, res) => {
   }
 });
 
+// Catch-all
+app.use((req, res) => {
+  res.redirect('/');
+});
 
 app.listen(port, () => {
-  console.log(`App listening at http://localhost:${port}`);
+  console.log(`App running on http://localhost:${port}`);
 });
