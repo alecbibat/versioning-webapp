@@ -1,1 +1,16 @@
-<form method='POST' action='/locations/<%= location %>/new'>Title: <input name='title'><br>Body:<textarea name='body'></textarea><br><button type='submit'>Save</button></form>
+<h2>Create New Document for <%= location %></h2>
+<form method="POST" action="/locations/<%= location %>/new">
+  <label>Title:</label><br>
+  <input name="title" required /><br><br>
+
+  <label>Author:</label><br>
+  <input name="author" required /><br><br>
+
+  <label>Body:</label><br>
+  <textarea name="body" rows="10" cols="50" required></textarea><br><br>
+
+  <label>Tags (comma separated):</label><br>
+  <input name="tags" /><br><br>
+
+  <button type="submit">Save Document</button>
+</form>
