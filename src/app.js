@@ -75,9 +75,11 @@ app.get('/download/:id', async (req, res) => {
 
     try {
      const browser = await puppeteer.launch({
-  executablePath: '/app/.apt/usr/bin/google-chrome',
-  args: ['--no-sandbox', '--disable-setuid-sandbox']
+  headless: 'new',
+  executablePath: '/app/.apt/opt/chrome/chrome',
+  args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
 });
+
 
       });
 
