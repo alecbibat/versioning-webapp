@@ -1,6 +1,8 @@
 const admin = require('firebase-admin');
-const path = require('path');
-const serviceAccount = require(path.join(__dirname, '../firebase-key.json'));
+
+// Decode the base64 config var from Heroku
+const decodedKey = Buffer.from(process.env.FIREBASE_KEY_BASE64, 'base64').toString('utf8');
+const serviceAccount = JSON.parse(decodedKey);
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount)
@@ -10,10 +12,7 @@ const db = admin.firestore();
 
 module.exports = {
   getLatestVersion: async () => {
-    const snapshot = await db.collection('documents')
-      .orderBy('created_at', 'desc')
-      .limit(1)
-      .get();
+    const snapshot = await db.collection('documents').orderBy('created_at', 'desc').limit(1).get();
     return snapshot.docs[0]?.data();
   },
 
