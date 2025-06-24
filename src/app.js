@@ -137,3 +137,48 @@ app.get('/download/:id', async (req, res) => {
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
+
+app.get('/pdf/:id', async (req, res) => {
+  try {
+    const version = await db.getVersionById(req.params.id);
+
+    if (!version) {
+      console.error('Document not found for ID:', req.params.id);
+      return res.status(404).send('Document not found');
+    }
+
+    const templatePath = path.join(__dirname, '../views/view.ejs');
+
+    ejs.renderFile(templatePath, { document: version }, async (err, html) => {
+      if (err) {
+        console.error('EJS render error:', err);
+        return res.status(500).send('Template render error');
+      }
+
+      try {
+        const browser = await puppeteer.launch({
+          headless: 'new',
+          executablePath: '/app/.apt/opt/chrome/chrome',
+          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+        });
+
+        const page = await browser.newPage();
+        await page.setContent(html, { waitUntil: 'networkidle0' });
+
+        const pdfBuffer = await page.pdf({ format: 'A4' });
+        await browser.close();
+
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="document-${req.params.id}.pdf"`);
+        res.send(pdfBuffer);
+      } catch (pdfError) {
+        console.error('PDF generation error:', pdfError);
+        res.status(500).send('Error creating PDF');
+      }
+    });
+  } catch (error) {
+    console.error('Route error in /pdf/:id:', error);
+    res.status(500).send('Server error');
+  }
+});
+
