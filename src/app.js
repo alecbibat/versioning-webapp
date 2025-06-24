@@ -74,13 +74,9 @@ app.get('/download/:id', async (req, res) => {
     if (err) return res.status(500).send('Template render error');
 
     try {
-      const browser = await puppeteer.launch({
-  headless: 'new',
-  args: [
-    '--no-sandbox',
-    '--disable-setuid-sandbox',
-    '--disable-dev-shm-usage'
-  ]
+     const browser = await puppeteer.launch({
+  executablePath: '/app/.apt/usr/bin/google-chrome',
+  args: ['--no-sandbox', '--disable-setuid-sandbox']
 });
 
       });
