@@ -125,9 +125,9 @@ app.listen(PORT, () => {
 
 app.use('/uploads', express.static(path.join(__dirname, '..', 'uploads')));
 
-const pdf = require('html-pdf');
+const puppeteer = require('puppeteer');
 
-app.get('/locations/:location/pdf', (req, res) => {
+app.get('/locations/:location/pdf', async (req, res) => {
   const location = req.params.location;
   const history = documents[location] || [];
   const latest = history[history.length - 1];
@@ -135,44 +135,72 @@ app.get('/locations/:location/pdf', (req, res) => {
   if (!latest) return res.send('No document to generate.');
 
   const html = `
-    <h1>${latest.documentTitle}</h1>
-    <p><strong>Prepared By:</strong> ${latest.preparedBy}</p>
-    <p><strong>Location:</strong> ${latest.locationName}</p>
-    <p><strong>Date:</strong> ${latest.date}</p>
-    <hr>
-    <h2>Goals</h2>
-    <p><strong>Incident Name (202):</strong> ${latest.incidentName202}</p>
-    <p><strong>Incident Objective (202):</strong> ${latest.incidentObjective202}</p>
-    <p><strong>Incident Briefing (201):</strong> ${latest.incidentBriefing201}</p>
-    <p><strong>Situation Summary (201):</strong> ${latest.situationSummary201}</p>
-    <hr>
-    <h2>Action Plan Objectives</h2>
-    <table border="1" cellspacing="0" cellpadding="5">
-      <thead>
-        <tr>
-          <th>Objective (6A)</th>
-          <th>Strategy (6B)</th>
-          <th>Resources (6C)</th>
-          <th>Assigned To (6D)</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${latest.actionPlan.map(row => `
+    <html>
+    <head>
+      <style>
+        body { font-family: Arial; padding: 20px; }
+        h1, h2 { border-bottom: 1px solid #ccc; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #000; padding: 6px; }
+      </style>
+    </head>
+    <body>
+      <h1>${latest.documentTitle}</h1>
+      <p><strong>Prepared By:</strong> ${latest.preparedBy}</p>
+      <p><strong>Location:</strong> ${latest.locationName}</p>
+      <p><strong>Date:</strong> ${latest.date}</p>
+
+      <h2>Goals</h2>
+      <p><strong>Incident Name (202):</strong> ${latest.incidentName202}</p>
+      <p><strong>Incident Objective (202):</strong> ${latest.incidentObjective202}</p>
+      <p><strong>Incident Briefing (201):</strong> ${latest.incidentBriefing201}</p>
+      <p><strong>Situation Summary (201):</strong> ${latest.situationSummary201}</p>
+
+      <h2>Action Plan Objectives</h2>
+      <table>
+        <thead>
           <tr>
-            <td>${row.objective}</td>
-            <td>${row.strategy}</td>
-            <td>${row.resource}</td>
-            <td>${row.assigned}</td>
-          </tr>`).join('')}
-      </tbody>
-    </table>
+            <th>Objective (6A)</th>
+            <th>Strategy (6B)</th>
+            <th>Resources (6C)</th>
+            <th>Assigned To (6D)</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${latest.actionPlan.map(row => `
+            <tr>
+              <td>${row.objective}</td>
+              <td>${row.strategy}</td>
+              <td>${row.resource}</td>
+              <td>${row.assigned}</td>
+            </tr>`).join('')}
+        </tbody>
+      </table>
+    </body>
+    </html>
   `;
 
-  pdf.create(html).toStream((err, stream) => {
-    if (err) return res.status(500).send('Error creating PDF.');
-    res.setHeader('Content-type', 'application/pdf');
-    res.setHeader('Content-disposition', `attachment; filename="${latest.documentTitle || 'document'}.pdf"`);
-    stream.pipe(res);
-  });
+  try {
+    const browser = await puppeteer.launch({
+      headless: 'new',
+      args: ['--no-sandbox', '--disable-setuid-sandbox']
+    });
+
+    const page = await browser.newPage();
+    await page.setContent(html, { waitUntil: 'networkidle0' });
+    const pdfBuffer = await page.pdf({ format: 'A4' });
+
+    await browser.close();
+
+    res.set({
+      'Content-Type': 'application/pdf',
+      'Content-Disposition': `attachment; filename="${latest.documentTitle || 'document'}.pdf"`
+    });
+    res.send(pdfBuffer);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error creating PDF.');
+  }
 });
+
 
