@@ -1,0 +1,16 @@
+<h2>Edit Latest Document — <%= location %></h2>
+<form method="POST" action="/locations/<%= location %>/new">
+  <label>Title:</label><br>
+  <input name="title" value="<%= document.title %>" required /><br><br>
+
+  <label>Author:</label><br>
+  <input name="author" value="<%= document.author %>" required /><br><br>
+
+  <label>Body:</label><br>
+  <textarea name="body" rows="10" cols="50" required><%= document.body %></textarea><br><br>
+
+  <label>Tags (comma separated):</label><br>
+  <input name="tags" value="<%= document.tags %>" /><br><br>
+
+  <button type="submit">Save New Version</button>
+</form>
