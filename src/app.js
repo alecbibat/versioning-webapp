@@ -5,7 +5,6 @@ const { v4: uuidv4 } = require('uuid');
 const moment = require('moment');
 const path = require('path');
 const ejs = require('ejs');
-const puppeteer = require('puppeteer');
 
 const db = require('../models/db');
 
