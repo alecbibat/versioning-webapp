@@ -1,6 +1,7 @@
 {
-  "name": "doc-manager",
+  "name": "versioning-webapp",
   "version": "1.0.0",
+  "description": "A document versioning web app with PDF export",
   "main": "src/app.js",
   "scripts": {
     "start": "node src/app.js"
@@ -9,11 +10,9 @@
     "body-parser": "^1.20.2",
     "ejs": "^3.1.9",
     "express": "^4.18.2",
-    "html-pdf": "^3.0.1",
+    "firebase-admin": "^11.11.1",
     "moment": "^2.29.4",
-    "pg": "^8.10.0",
-    "multer": "^1.4.4",
-    "html-pdf": "^2.2.0",
-    "uuid": "^9.0.0"
+    "multer": "^1.4.5-lts.1",
+    "uuid": "^9.0.1"
   }
 }
