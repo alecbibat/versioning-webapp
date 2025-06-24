@@ -17,167 +17,85 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 const upload = multer();
 
+// Homepage - list latest version
 app.get('/', async (req, res) => {
-  try {
-    const latest = await db.getLatestVersion();
-    res.render('index', { document: latest });
-  } catch (error) {
-    console.error('Error in GET /:', error);
-    res.status(500).send('Internal server error');
-  }
+  const latest = await db.getLatestVersion();
+  res.render('index', { latest });
 });
 
-app.get('/new', (req, res) => {
-  try {
-    res.render('new');
-  } catch (error) {
-    console.error('Error in GET /new:', error);
-    res.status(500).send('Internal server error');
-  }
-});
-
-app.post('/new', upload.none(), async (req, res) => {
-  try {
-    const { location, content } = req.body;
-    await db.saveNewVersion(location, content);
-    res.redirect('/');
-  } catch (error) {
-    console.error('Error in POST /new:', error);
-    res.status(500).send('Internal server error');
-  }
-});
-
+// View all versions
 app.get('/history', async (req, res) => {
-  try {
-    const history = await db.getAllVersions();
-    res.render('history', { versions: history });
-  } catch (error) {
-    console.error('Error in GET /history:', error);
-    res.status(500).send('Internal server error');
-  }
+  const versions = await db.getAllVersions();
+  res.render('history', { versions });
 });
 
-app.get('/view/:id', async (req, res) => {
-  try {
-    const version = await db.getVersionById(req.params.id);
-    res.render('view', { document: version });
-  } catch (error) {
-    console.error('Error in GET /view/:id:', error);
-    res.status(500).send('Internal server error');
-  }
+// New document form
+app.get('/new', (req, res) => {
+  res.render('new');
 });
 
+// Create new version
+app.post('/new', upload.none(), async (req, res) => {
+  const data = {
+    id: uuidv4(),
+    location: req.body.location,
+    title: req.body.title,
+    content: req.body.content,
+    created_at: moment().toISOString()
+  };
+  await db.saveVersion(data);
+  res.redirect('/');
+});
+
+// Edit a version
 app.get('/edit/:id', async (req, res) => {
-  try {
-    const version = await db.getVersionById(req.params.id);
-    res.render('edit', { document: version });
-  } catch (error) {
-    console.error('Error in GET /edit/:id:', error);
-    res.status(500).send('Internal server error');
+  const version = await db.getVersionById(req.params.id);
+  if (!version) {
+    return res.status(404).send('Version not found');
   }
+  res.render('edit', { version });
 });
 
 app.post('/edit/:id', upload.none(), async (req, res) => {
-  try {
-    const { location, content } = req.body;
-    await db.updateVersion(req.params.id, location, content);
-    res.redirect('/');
-  } catch (error) {
-    console.error('Error in POST /edit/:id:', error);
-    res.status(500).send('Internal server error');
-  }
+  const data = {
+    id: uuidv4(),
+    location: req.body.location,
+    title: req.body.title,
+    content: req.body.content,
+    created_at: moment().toISOString()
+  };
+  await db.saveVersion(data);
+  res.redirect('/');
 });
 
-app.get('/location/:location', async (req, res) => {
-  try {
-    const docs = await db.getVersionsByLocation(req.params.location);
-    res.render('location', { documents: docs, location: req.params.location });
-  } catch (error) {
-    console.error('Error in GET /location/:location:', error);
-    res.status(500).send('Internal server error');
+// View a single version
+app.get('/view/:id', async (req, res) => {
+  const version = await db.getVersionById(req.params.id);
+  if (!version) {
+    return res.status(404).send('Version not found');
   }
+  res.render('view', { version });
 });
 
-app.get('/download/:id', async (req, res) => {
+// View all versions for a location
+app.get('/locations/:id', async (req, res) => {
+  const locationId = req.params.id;
+
   try {
-    const version = await db.getVersionById(req.params.id);
-    const templatePath = path.join(__dirname, '../views/view.ejs');
+    const snapshot = await db.collection('documents')
+      .where('location', '==', locationId)
+      .orderBy('created_at', 'desc')
+      .get();
 
-    ejs.renderFile(templatePath, { document: version }, async (err, html) => {
-      if (err) return res.status(500).send('Template render error');
+    const versions = snapshot.docs.map(doc => doc.data());
 
-      try {
-        const browser = await puppeteer.launch({
-          headless: 'new',
-          executablePath: '/app/.apt/opt/chrome/chrome', // For Heroku w/ buildpack
-          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
-        });
-
-        const page = await browser.newPage();
-        await page.setContent(html, { waitUntil: 'networkidle0' });
-
-        const pdfBuffer = await page.pdf({ format: 'A4' });
-        await browser.close();
-
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename="document-${req.params.id}.pdf"`);
-        res.send(pdfBuffer);
-      } catch (e) {
-        console.error('PDF generation error:', e);
-        res.status(500).send('PDF generation failed');
-      }
-    });
-  } catch (error) {
-    console.error('Error in GET /download/:id:', error);
-    res.status(500).send('Internal server error');
+    res.render('location', { location: locationId, versions });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send('Error fetching location versions');
   }
 });
 
 app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+  console.log(`App listening at http://localhost:${port}`);
 });
-
-app.get('/pdf/:id', async (req, res) => {
-  try {
-    const version = await db.getVersionById(req.params.id);
-
-    if (!version) {
-      console.error('Document not found for ID:', req.params.id);
-      return res.status(404).send('Document not found');
-    }
-
-    const templatePath = path.join(__dirname, '../views/view.ejs');
-
-    ejs.renderFile(templatePath, { document: version }, async (err, html) => {
-      if (err) {
-        console.error('EJS render error:', err);
-        return res.status(500).send('Template render error');
-      }
-
-      try {
-        const browser = await puppeteer.launch({
-          headless: 'new',
-          executablePath: '/app/.apt/opt/chrome/chrome',
-          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
-        });
-
-        const page = await browser.newPage();
-        await page.setContent(html, { waitUntil: 'networkidle0' });
-
-        const pdfBuffer = await page.pdf({ format: 'A4' });
-        await browser.close();
-
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename="document-${req.params.id}.pdf"`);
-        res.send(pdfBuffer);
-      } catch (pdfError) {
-        console.error('PDF generation error:', pdfError);
-        res.status(500).send('Error creating PDF');
-      }
-    });
-  } catch (error) {
-    console.error('Route error in /pdf/:id:', error);
-    res.status(500).send('Server error');
-  }
-});
-
