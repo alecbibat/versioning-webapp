@@ -23,31 +23,38 @@ app.get('/', async (req, res) => {
   res.render('index', { latest });
 });
 
-// History of all versions
+// View all versions (global history)
 app.get('/history', async (req, res) => {
   const versions = await db.getAllVersions();
-  res.render('history', { versions });
+  res.render('history', { versions, location: 'all' });
 });
 
-// New document form
-app.get('/new', (req, res) => {
-  res.render('new');
+// Location-specific history
+app.get('/locations/:location/history', async (req, res) => {
+  const location = req.params.location;
+  const versions = await db.getVersionsByLocation(location);
+  res.render('history', { location, versions });
 });
 
-// Create new document
-app.post('/new', upload.none(), async (req, res) => {
-  const { location, title, content } = req.body;
+// Location-specific new document form
+app.get('/locations/:location/new', (req, res) => {
+  res.render('new', { location: req.params.location });
+});
+
+// Location-specific document creation
+app.post('/locations/:location/new', upload.none(), async (req, res) => {
+  const location = req.params.location;
 
   const data = {
     id: uuidv4(),
     location,
-    title,
-    content,
+    title: req.body.documentTitle,
+    content: JSON.stringify(req.body), // storing full content; adjust as needed
     created_at: moment().toISOString()
   };
 
-  await db.saveVersion(data);  // This must exist in db.js
-  res.redirect('/');
+  await db.saveVersion(data);
+  res.redirect(`/locations/${encodeURIComponent(location)}`);
 });
 
 // View a specific version
@@ -79,7 +86,7 @@ app.post('/edit/:id', upload.none(), async (req, res) => {
   res.redirect('/');
 });
 
-// Versions by location
+// View dashboard for a specific location
 app.get('/locations/:id', async (req, res) => {
   const locationId = req.params.id;
 
@@ -94,7 +101,7 @@ app.get('/locations/:id', async (req, res) => {
 
 // Catch-all
 app.use((req, res) => {
-  res.redirect('/');
+  res.status(404).send('Page not found');
 });
 
 app.listen(port, () => {
