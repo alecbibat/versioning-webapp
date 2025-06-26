@@ -41,7 +41,7 @@ app.get('/locations/:location/new', (req, res) => {
   res.render('new', { location: req.params.location });
 });
 
-// Location-specific document creation
+// ✅ Location-specific document submission route
 app.post('/locations/:location/new', upload.none(), async (req, res) => {
   const location = req.params.location;
 
@@ -49,7 +49,7 @@ app.post('/locations/:location/new', upload.none(), async (req, res) => {
     id: uuidv4(),
     location,
     title: req.body.documentTitle,
-    content: JSON.stringify(req.body), // storing full content; adjust as needed
+    content: JSON.stringify(req.body), // adjust this if you want better structure
     created_at: moment().toISOString()
   };
 
