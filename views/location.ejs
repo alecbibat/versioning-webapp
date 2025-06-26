@@ -4,22 +4,30 @@
 
 <ul style="list-style: none;">
   <li style="margin: 10px 0;">
-    <form method="GET" action="/locations/<%= encodeURIComponent(location) %>/new">
+    <form method="GET" action="/new">
       <button type="submit">➕ Create New Document</button>
     </form>
   </li>
   <li style="margin: 10px 0;">
-    <form method="GET" action="/locations/<%= encodeURIComponent(location) %>/view">
-      <button type="submit">👁️ View Latest Version</button>
-    </form>
+    <% if (versions.length > 0) { %>
+      <form method="GET" action="/view/<%= versions[0].id %>">
+        <button type="submit">👁️ View Latest Version</button>
+      </form>
+    <% } else { %>
+      <button disabled>No Versions to View</button>
+    <% } %>
   </li>
   <li style="margin: 10px 0;">
-    <form method="GET" action="/locations/<%= encodeURIComponent(location) %>/edit">
-      <button type="submit">✏️ Edit Latest Version</button>
-    </form>
+    <% if (versions.length > 0) { %>
+      <form method="GET" action="/edit/<%= versions[0].id %>">
+        <button type="submit">✏️ Edit Latest Version</button>
+      </form>
+    <% } else { %>
+      <button disabled>No Versions to Edit</button>
+    <% } %>
   </li>
   <li style="margin: 10px 0;">
-    <form method="GET" action="/locations/<%= encodeURIComponent(location) %>/history">
+    <form method="GET" action="/history">
       <button type="submit">📜 View History</button>
     </form>
   </li>
