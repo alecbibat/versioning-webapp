@@ -4,9 +4,10 @@
 
 <ul style="list-style: none;">
   <li style="margin: 10px 0;">
-    <form method="GET" action="/new">
-      <button type="submit">➕ Create New Document</button>
-    </form>
+    <form method="GET" action="/locations/<%= encodeURIComponent(location) %>/new">
+  <button type="submit">➕ Create New Document</button>
+</form>
+
   </li>
   <li style="margin: 10px 0;">
     <% if (versions.length > 0) { %>
