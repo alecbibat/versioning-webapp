@@ -36,7 +36,7 @@ module.exports = {
     .where('location', '==', location)
     .get();
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-}
+},
 
 
   saveVersion: async (data) => {
