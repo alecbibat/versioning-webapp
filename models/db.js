@@ -32,12 +32,12 @@ module.exports = {
   },
 
   getVersionsByLocation: async (location) => {
-    const snapshot = await db.collection('documents')
-      .where('location', '==', location)
-      .orderBy('created_at', 'desc')
-      .get();
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-  },
+  const snapshot = await db.collection('documents')
+    .where('location', '==', location)
+    .get();
+  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+}
+
 
   saveVersion: async (data) => {
     await db.collection('documents').add(data);
