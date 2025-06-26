@@ -16,7 +16,8 @@ module.exports = {
       .orderBy('created_at', 'desc')
       .limit(1)
       .get();
-    return snapshot.docs[0]?.data();
+    const doc = snapshot.docs[0];
+    return doc ? { id: doc.id, ...doc.data() } : null;
   },
 
   getAllVersions: async () => {
@@ -32,16 +33,15 @@ module.exports = {
   },
 
   getVersionsByLocation: async (location) => {
-  const snapshot = await db.collection('documents')
-    .where('location', '==', location)
-    .get();
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-},
-
+    const snapshot = await db.collection('documents')
+      .where('location', '==', location)
+      .get();
+    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+  },
 
   saveVersion: async (data) => {
-  const ref = await db.collection('documents').add(data);
-  data.id = ref.id; // ✅ add Firestore ID to the document object
-}
-
+    const ref = await db.collection('documents').add(data);
+    data.id = ref.id; // ✅ Attach Firestore ID to the data object (for UI use)
+    return data;
+  }
 };
