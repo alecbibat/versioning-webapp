@@ -40,6 +40,8 @@ module.exports = {
 
 
   saveVersion: async (data) => {
-    await db.collection('documents').add(data);
-  }
+  const ref = await db.collection('documents').add(data);
+  data.id = ref.id; // ✅ add Firestore ID to the document object
+}
+
 };
