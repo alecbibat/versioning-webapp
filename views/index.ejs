@@ -22,3 +22,17 @@
     </li>
   <% }) %>
 </ul>
+
+<hr>
+
+<h2>Document Tools</h2>
+<ul style="list-style: none; padding: 0;">
+  <li style="margin: 6px 0;"><a href="/new">➕ Create New Document</a></li>
+  <li style="margin: 6px 0;"><a href="/history">📜 View History</a></li>
+  <% if (latest && latest.id) { %>
+    <li style="margin: 6px 0;"><a href="/view/<%= latest.id %>">👁️ View Latest</a></li>
+    <li style="margin: 6px 0;"><a href="/edit/<%= latest.id %>">✏️ Edit Latest</a></li>
+  <% } else { %>
+    <li style="margin: 6px 0;"><em>No versions yet to view or edit.</em></li>
+  <% } %>
+</ul>
