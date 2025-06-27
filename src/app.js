@@ -45,21 +45,51 @@ app.get('/locations/:location/new', (req, res) => {
 app.post('/locations/:location/new', upload.none(), async (req, res) => {
   const location = req.params.location;
 
-const { location: _discard, ...formData } = req.body;
+  const {
+    documentTitle,
+    preparedBy,
+    locationName,
+    date,
+    incidentName202,
+    incidentObjective202,
+    incidentBriefing201,
+    situationSummary201,
+    objectives = [],
+    strategies = [],
+    resources = [],
+    assigned = []
+  } = req.body;
 
-const data = {
-  id: uuidv4(),
-  location: req.params.location,
-  ...formData,
-  created_at: moment().toISOString()
-};
+  // Build actionPlan array from aligned inputs
+  const actionPlan = [];
+  for (let i = 0; i < objectives.length; i++) {
+    actionPlan.push({
+      objective: objectives[i],
+      strategy: strategies[i],
+      resource: resources[i],
+      assigned: assigned[i]
+    });
+  }
 
-
-
+  const data = {
+    id: uuidv4(),
+    location,
+    title: documentTitle,
+    preparedBy,
+    locationName,
+    date,
+    incidentName202,
+    incidentObjective202,
+    incidentBriefing201,
+    situationSummary201,
+    actionPlan,
+    created_at: moment().toISOString()
+  };
 
   await db.saveVersion(data);
   res.redirect(`/locations/${encodeURIComponent(location)}`);
 });
+
 
 // View a specific version
 app.get('/view/:id', async (req, res) => {
