@@ -73,8 +73,13 @@ app.get('/view/:id', async (req, res) => {
 app.get('/edit/:id', async (req, res) => {
   const version = await db.getVersionById(req.params.id);
   if (!version) return res.status(404).send('Version not found');
-  res.render('edit', { version });
+
+  res.render('edit', {
+    document: version,
+    location: version.location
+  });
 });
+
 
 app.post('/edit/:id', upload.none(), async (req, res) => {
   const { location, title, content } = req.body;
