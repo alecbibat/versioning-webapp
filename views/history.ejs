@@ -10,9 +10,9 @@
       <li style="margin-bottom: 15px;">
         <div style="padding: 10px; border: 1px solid #ccc; border-radius: 8px;">
           <strong>Version <%= versions.length - i %></strong><br>
-          <strong>Title:</strong> <%= doc.documentTitle %><br>
-          <strong>Saved:</strong> <%= doc.timestamp %><br>
-          <a href="/locations/<%= location %>/history/<%= doc.id %>">🔍 View This Version</a>
+          <strong>Title:</strong> <%= doc.title %><br>
+          <strong>Saved:</strong> <%= doc.created_at %><br>
+          <a href="/view/<%= doc.id %>">🔍 View This Version</a>
         </div>
       </li>
     <% }) %>
