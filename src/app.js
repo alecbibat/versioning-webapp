@@ -45,13 +45,13 @@ app.get('/locations/:location/new', (req, res) => {
 app.post('/locations/:location/new', upload.none(), async (req, res) => {
   const location = req.params.location;
 
-  const data = {
-    id: uuidv4(),
-    location,
-    title: req.body.documentTitle,
-    content: JSON.stringify(req.body), // adjust this if you want better structure
-    created_at: moment().toISOString()
-  };
+const data = {
+  id: uuidv4(),
+  location,
+  ...req.body,
+  created_at: moment().toISOString()
+};
+
 
   await db.saveVersion(data);
   res.redirect(`/locations/${encodeURIComponent(location)}`);
