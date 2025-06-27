@@ -1,69 +1,58 @@
 <link rel="stylesheet" href="/styles.css" />
 
-<h2>Edit Document — <%= location %></h2>
-<form method="POST" action="/locations/<%= location %>/new" enctype="multipart/form-data">
-  <h3>Basic Information</h3>
-  <label>Document Title:</label><br>
-  <input name="documentTitle" value="<%= document.documentTitle %>" required /><br><br>
+<h2>✏️ Edit Document — <%= location.charAt(0).toUpperCase() + location.slice(1) %></h2>
 
-  <label>Prepared By:</label><br>
-  <input name="preparedBy" value="<%= document.preparedBy %>" required /><br><br>
+<form method="POST" action="/edit/<%= document.id %>">
+  <input type="hidden" name="location" value="<%= location %>" />
 
-  <label>Location Name:</label><br>
-  <input name="locationName" value="<%= document.locationName %>" required /><br><br>
+  <label for="title">Title:</label>
+  <input type="text" id="title" name="title" value="<%= document.title || '' %>" required />
 
-  <label>Date:</label><br>
-  <input type="date" name="date" value="<%= document.date %>" required /><br><br>
+  <label for="preparedBy">Prepared By:</label>
+  <input type="text" id="preparedBy" name="preparedBy" value="<%= document.preparedBy || '' %>" />
 
-  <h3>Goals</h3>
-  <label>Incident Name (202):</label><br>
-  <input name="incidentName202" value="<%= document.incidentName202 %>" required /><br><br>
+  <label for="date">Date:</label>
+  <input type="date" id="date" name="date" value="<%= document.date || '' %>" />
 
-  <label>Incident Objective (202):</label><br>
-  <textarea name="incidentObjective202" rows="2" cols="50" required><%= document.incidentObjective202 %></textarea><br><br>
+  <label for="incidentName202">Incident Name (202):</label>
+  <input type="text" id="incidentName202" name="incidentName202" value="<%= document.incidentName202 || '' %>" />
 
-  <label>Incident Briefing (201):</label><br>
-  <textarea name="incidentBriefing201" rows="3" cols="50" required><%= document.incidentBriefing201 %></textarea><br><br>
+  <label for="incidentObjective202">Incident Objectives (202):</label>
+  <textarea id="incidentObjective202" name="incidentObjective202"><%= document.incidentObjective202 || '' %></textarea>
 
-  <label>Situation Summary at Initial Start (201):</label><br>
-  <textarea name="situationSummary201" rows="3" cols="50" required><%= document.situationSummary201 %></textarea><br><br>
+  <label for="incidentBriefing201">Incident Briefing (201):</label>
+  <textarea id="incidentBriefing201" name="incidentBriefing201"><%= document.incidentBriefing201 || '' %></textarea>
 
-  <h3>Action Plan Objectives (202)</h3>
-  <table id="actionPlanTable" border="1" cellpadding="5">
+  <label for="situationSummary201">Situation Summary (201):</label>
+  <textarea id="situationSummary201" name="situationSummary201"><%= document.situationSummary201 || '' %></textarea>
+
+  <h3>Action Plan</h3>
+  <table>
     <thead>
       <tr>
-        <th>Incident Objective (6A)</th>
-        <th>Strategies/Tactics (6B)</th>
-        <th>Resources Required (6C)</th>
-        <th>Assigned To (6D)</th>
+        <th>Objective</th>
+        <th>Strategy</th>
+        <th>Resources</th>
+        <th>Assigned</th>
       </tr>
     </thead>
-    <tbody id="tableBody">
-      <% document.actionPlan.forEach(row => { %>
-        <tr>
-          <td><input name="objectives[]" value="<%= row.objective %>" required></td>
-          <td><input name="strategies[]" value="<%= row.strategy %>" required></td>
-          <td><input name="resources[]" value="<%= row.resource %>" required></td>
-          <td><input name="assigned[]" value="<%= row.assigned %>" required></td>
-        </tr>
-      <% }) %>
+    <tbody>
+      <% if (document.actionPlan && Array.isArray(document.actionPlan)) { %>
+        <% document.actionPlan.forEach((item, i) => { %>
+          <tr>
+            <td><input name="objectives" value="<%= item.objective || '' %>" /></td>
+            <td><input name="strategies" value="<%= item.strategy || '' %>" /></td>
+            <td><input name="resources" value="<%= item.resource || '' %>" /></td>
+            <td><input name="assigned" value="<%= item.assigned || '' %>" /></td>
+          </tr>
+        <% }) %>
+      <% } else { %>
+        <tr><td colspan="4">No action plan data available.</td></tr>
+      <% } %>
     </tbody>
   </table>
-  <button type="button" onclick="addRow()">+ Add Row</button><br><br>
 
-  <h3>Upload New Attachment (optional)</h3>
-  <input type="file" name="attachment" /><br><br>
-
-  <button type="submit">Save New Version</button>
+  <button type="submit">💾 Save Changes</button>
 </form>
 
-<script>
-function addRow() {
-  const table = document.getElementById('tableBody');
-  const row = table.insertRow();
-  for (let i = 0; i < 4; i++) {
-    const cell = row.insertCell();
-    cell.innerHTML = '<input name="' + ['objectives[]', 'strategies[]', 'resources[]', 'assigned[]'][i] + '" required>';
-  }
-}
-</script>
+<a href="/locations/<%= location %>">← Back to Location Dashboard</a>
