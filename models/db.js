@@ -39,9 +39,10 @@ module.exports = {
     return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   },
 
-  saveVersion: async (data) => {
-    const ref = await db.collection('documents').add(data);
-    data.id = ref.id; // ✅ Attach Firestore ID to the data object (for UI use)
-    return data;
-  }
+saveVersion: async (data) => {
+  const ref = db.collection('documents').doc(data.id); // use the UUID we already generated
+  await ref.set(data);
+  return { id: ref.id, ...data };
+}
+
 };
