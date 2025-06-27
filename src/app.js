@@ -53,6 +53,7 @@ const data = {
 };
 
 
+
   await db.saveVersion(data);
   res.redirect(`/locations/${encodeURIComponent(location)}`);
 });
