@@ -45,12 +45,15 @@ app.get('/locations/:location/new', (req, res) => {
 app.post('/locations/:location/new', upload.none(), async (req, res) => {
   const location = req.params.location;
 
+const { location: _discard, ...formData } = req.body;
+
 const data = {
   id: uuidv4(),
-  location,
-  ...req.body,
+  location: req.params.location,
+  ...formData,
   created_at: moment().toISOString()
 };
+
 
 
 
