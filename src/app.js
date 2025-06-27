@@ -15,7 +15,14 @@ app.set('view engine', 'ejs');
 app.use(express.static(path.join(__dirname, '../public')));
 app.use(bodyParser.urlencoded({ extended: true }));
 
-const upload = multer();
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fieldSize: 10 * 1024 * 1024, // 10MB for text fields
+    fields: 100,                 // Max number of non-file fields
+  }
+});
+
 
 // Homepage - latest version
 app.get('/', async (req, res) => {
