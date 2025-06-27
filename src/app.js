@@ -116,19 +116,52 @@ app.get('/edit/:id', async (req, res) => {
 
 
 app.post('/edit/:id', upload.none(), async (req, res) => {
-  const { location, title, content } = req.body;
+  const {
+    location,
+    title,
+    preparedBy,
+    locationName,
+    date,
+    incidentName202,
+    incidentObjective202,
+    incidentBriefing201,
+    situationSummary201,
+    objectives = [],
+    strategies = [],
+    resources = [],
+    assigned = []
+  } = req.body;
+
+  // Construct the updated actionPlan array
+  const actionPlan = [];
+  for (let i = 0; i < objectives.length; i++) {
+    actionPlan.push({
+      objective: objectives[i],
+      strategy: strategies[i],
+      resource: resources[i],
+      assigned: assigned[i]
+    });
+  }
 
   const data = {
     id: uuidv4(),
     location,
     title,
-    content,
+    preparedBy,
+    locationName,
+    date,
+    incidentName202,
+    incidentObjective202,
+    incidentBriefing201,
+    situationSummary201,
+    actionPlan,
     created_at: moment().toISOString()
   };
 
   await db.saveVersion(data);
-  res.redirect('/');
+  res.redirect(`/locations/${encodeURIComponent(location)}`);
 });
+
 
 // View dashboard for a specific location
 app.get('/locations/:id', async (req, res) => {
